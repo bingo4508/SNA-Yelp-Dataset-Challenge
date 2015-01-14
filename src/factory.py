@@ -173,6 +173,9 @@ def split_training_data(fn, num, threshold):
             c.append(k)
 
     c_split = rd.sample(c, num)
+    with open(fn+'(split_businesses)', 'w') as f:
+        for e in c_split:
+            f.write('%s ' % e)
 
     with open(fn+'(split)', 'w') as f1:
         with open(fn+'(else)', 'w') as f2:
