@@ -65,7 +65,10 @@ for i in [1, 2, 3]:
         # if len(e) > threshold:
         #     e = e[-threshold:]
 
-        r = predict(e, '../output/naive3_100')
+        # r = predict(e, '../output/naive3_100')
+
+        # Distance model
+
 
         infected.append(r)
 

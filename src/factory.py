@@ -1,8 +1,10 @@
 __author__ = 'bingo4508'
 
-from util import *
 import random as rd
 import datetime
+import os
+
+from src.one_time_util import *
 
 
 def generate_graph():
@@ -55,7 +57,7 @@ def generate_training2():
         if d[k] > 100:
             c.append(k)
 
-    # Random select 10 business having more than 100 reviews
+    # Random select 100 business having more than 100 reviews
     c = rd.sample(c, 100)
     
     index = sorted(range(len(r['business_id'])), key=lambda k: (r['business_id'][k], r['date'][k]))
@@ -133,20 +135,55 @@ def generate_training4():
     generate_testing(r, c_t)
 
 
+# midpoint of the geographic coordinate of the businesses of a user
+def generate_user_location():
+    test_business = 'data/testing_business.txt'
+    with open(test_business, 'r') as f:
+        tb = f.read().strip().split()
+
+    r = load_json('data/Review.txt', True, True)
+    b = load_json('data/Business.txt')
+    b = {b['business_id'][i]: (b['latitude'][i], b['longitude'][i]) for i in range(len(b['business_id']))}
+    d = {}
+    for i in range(len(r['business_id'])):
+        if b[r['business_id'][i]] not in tb:
+            append_dict(d, r['user_id'][i], b[r['business_id'][i]])
+    for k, v in d.items():
+        # (latitude, longitude)
+        s = [0, 0]
+        for e in v:
+            s[0] += e[0]
+            s[1] += e[1]
+        s = (s[0]/len(e), s[1]/len(e))
+        d[k] = s
+    with open('output/user_location(latitude_longitude).txt', 'w') as f:
+        for k, v in d.items():
+            f.write('%s %f %f\n' % (k, v[0], v[1]))
+
+
+def split_training_data(fn, num, threshold):
+    r = load_json('data/Review.txt', True, True)
+    d = {}
+    for i in range(len(r['business_id'])):
+        increment_dict(d, r['business_id'][i])
+
+    c = []
+    for k in d:
+        if d[k] > threshold:
+            c.append(k)
+
+    c_split = rd.sample(c, num)
+
+    with open(fn+'(split)', 'w') as f1:
+        with open(fn+'(else)', 'w') as f2:
+            with open(fn, 'r') as f3:
+                for l in f3:
+                    x = l.strip().split()
+                    if x[1] in c_split:
+                        f1.write(l)
+                    else:
+                        f2.write(l)
+
 
 if __name__ == '__main__':
-    generate_training4()
-
-
-# date = datetime.datetime(2014, 1, 1)
-# d = {}
-# q = 0
-# for i in range(len(r['date'])):
-#     if r['date'][i] > date:
-#         q += 1
-#         increment_dict(d, r['business_id'][i])
-#
-# c = 0
-# for k, v in d.items():
-#     if v > 100:
-#         c += 1
+    split_training_data('data/training.txt', 1000, 100)
