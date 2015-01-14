@@ -12,7 +12,8 @@ import os
 # from method.discrete_time import predict, load_model
 # from method.naive_time_delta import *
 # from method.rank import *
-from method.naive import *
+# from method.naive import *
+from method.distance_rank import *
 
 
 g = load_graph('../data/graph.txt')
@@ -68,7 +69,7 @@ for i in [1, 2, 3]:
         # r = predict(e, '../output/naive3_100')
 
         # Distance model
-
+        r = predict(j, '../data/user_location.txt')
 
         infected.append(r)
 

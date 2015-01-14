@@ -8,21 +8,21 @@ from src.one_time_util import *
 
 
 def generate_graph():
-    users = load_json('data/User.txt')
+    users = load_json('../data/User.txt')
 
     print("GO!")
-    with open('output/graph.txt', 'w') as f:
+    with open('../output/graph.txt', 'w') as f:
         for i, u in enumerate(users['user_id']):
             if len(users['friends'][i]) > 0:
                 f.write('%s %s\n' % (u, ' '.join(users['friends'][i])))
 
 
 def generate_training():
-    r = load_json('data/Review.txt', True, True)
+    r = load_json('../data/Review.txt', True, True)
     index = sorted(range(len(r['date'])), key=lambda k: r['date'][k])
 
     print("GO!")
-    with open('output/training.txt', 'w') as f:
+    with open('../output/training.txt', 'w') as f:
         for i in index:
             f.write("%s %s %s %f\n" % (r['user_id'][i], r['business_id'][i], r['date'][i].strftime("%Y/%m/%d"), r['stars'][i]))
 
@@ -38,8 +38,8 @@ def generate_testing(r, c, date=None):
             append_dict(d, r['business_id'][i], r['user_id'][i])
 
     for i in [1, 2, 3]:
-        with open('output/test_data_q%d.txt' % i, 'w') as fq:
-            with open('output/test_data_a%d.txt' % i, 'w') as fa:
+        with open('../output/test_data_q%d.txt' % i, 'w') as fq:
+            with open('../output/test_data_a%d.txt' % i, 'w') as fa:
                 for k in d:
                     cut = int(len(d[k])*i*0.1)
                     fq.write(' '.join(d[k][:cut])+'\n')
@@ -47,7 +47,7 @@ def generate_testing(r, c, date=None):
 
 
 def generate_training2():
-    r = load_json('data/Review.txt', True, True)
+    r = load_json('../data/Review.txt', True, True)
     d = {}
     for i in range(len(r['business_id'])):
         increment_dict(d, r['business_id'][i])
@@ -63,12 +63,12 @@ def generate_training2():
     index = sorted(range(len(r['business_id'])), key=lambda k: (r['business_id'][k], r['date'][k]))
 
     print("GO!")
-    with open('output/training.txt', 'w') as f:
+    with open('../output/training.txt', 'w') as f:
         for i in index:
             if r['business_id'][i] not in c:
                 f.write("%s %s %s %f\n" % (r['user_id'][i], r['business_id'][i], r['date'][i].strftime("%Y/%m/%d"), r['stars'][i]))
 
-    with open('output/testing_business.txt', 'w') as f:
+    with open('../output/testing_business.txt', 'w') as f:
         f.write(' '.join(c))
 
     # Generate 3 testing data
@@ -76,7 +76,7 @@ def generate_training2():
 
 
 def generate_training3(date=datetime.datetime(2014, 1, 1)):
-    r = load_json('data/Review.txt', True, True)
+    r = load_json('../data/Review.txt', True, True)
     d = {}
     for i in range(len(r['business_id'])):
         if r['date'][i] > date:
@@ -93,12 +93,12 @@ def generate_training3(date=datetime.datetime(2014, 1, 1)):
     index = sorted(range(len(r['business_id'])), key=lambda k: (r['business_id'][k], r['date'][k]))
 
     print("GO!")
-    with open('output/training.txt', 'w') as f:
+    with open('../output/training.txt', 'w') as f:
         for i in index:
             if r['date'][i] < date:
                 f.write("%s %s %s %f\n" % (r['user_id'][i], r['business_id'][i], r['date'][i].strftime("%Y/%m/%d"), r['stars'][i]))
 
-    with open('output/testing_business.txt', 'w') as f:
+    with open('../output/testing_business.txt', 'w') as f:
         f.write(' '.join(c))
 
     # Generate 3 testing data
@@ -106,7 +106,7 @@ def generate_training3(date=datetime.datetime(2014, 1, 1)):
 
 
 def generate_training4():
-    r = load_json('data/Review.txt', True, True)
+    r = load_json('../data/Review.txt', True, True)
     d = {}
     for i in range(len(r['business_id'])):
         increment_dict(d, r['business_id'][i])
@@ -123,12 +123,12 @@ def generate_training4():
     index = sorted(range(len(r['business_id'])), key=lambda k: (r['business_id'][k], r['date'][k]))
 
     print("GO!")
-    with open('output/training.txt', 'w') as f:
+    with open('../output/training.txt', 'w') as f:
         for i in index:
             if r['business_id'][i] in c:
                 f.write("%s %s %s %f\n" % (r['user_id'][i], r['business_id'][i], r['date'][i].strftime("%Y/%m/%d"), r['stars'][i]))
 
-    with open('output/testing_business.txt', 'w') as f:
+    with open('../output/testing_business.txt', 'w') as f:
         f.write(' '.join(c))
 
     # Generate 3 testing data
@@ -137,12 +137,12 @@ def generate_training4():
 
 # midpoint of the geographic coordinate of the businesses of a user
 def generate_user_location():
-    test_business = 'data/testing_business.txt'
+    test_business = '../data/testing_business.txt'
     with open(test_business, 'r') as f:
         tb = f.read().strip().split()
 
-    r = load_json('data/Review.txt', True, True)
-    b = load_json('data/Business.txt')
+    r = load_json('../data/Review.txt', True, True)
+    b = load_json('../data/Business.txt')
     b = {b['business_id'][i]: (b['latitude'][i], b['longitude'][i]) for i in range(len(b['business_id']))}
     d = {}
     for i in range(len(r['business_id'])):
@@ -156,13 +156,13 @@ def generate_user_location():
             s[1] += e[1]
         s = (s[0]/len(e), s[1]/len(e))
         d[k] = s
-    with open('output/user_location(latitude_longitude).txt', 'w') as f:
+    with open('../output/user_location(latitude_longitude).txt', 'w') as f:
         for k, v in d.items():
             f.write('%s %f %f\n' % (k, v[0], v[1]))
 
 
 def split_training_data(fn, num, threshold):
-    r = load_json('data/Review.txt', True, True)
+    r = load_json('../data/Review.txt', True, True)
     d = {}
     for i in range(len(r['business_id'])):
         increment_dict(d, r['business_id'][i])
@@ -186,7 +186,7 @@ def split_training_data(fn, num, threshold):
                         f1.write(l)
                     else:
                         f2.write(l)
-
+    generate_testing(r, c_split)
 
 if __name__ == '__main__':
-    split_training_data('data/training.txt', 1000, 100)
+    split_training_data('../data/training.txt', 1000, 100)
