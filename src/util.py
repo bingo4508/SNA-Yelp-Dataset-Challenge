@@ -65,6 +65,14 @@ def dump_adopters(adopter_fn, adopters):
             f.write('%s\n' % ' '.join(str(e) for e in l))
 
 
+def load_user_location(fn):
+    d = {}
+    with open(fn, 'r') as f:
+        for line in f:
+            line = line.strip().split()
+            d[line[0]] = (float(line[1]), float(line[2]))
+    return d
+
 ################## Evaluate #####################
 # metric: 'f1', 'precision', 'recall'
 def evaluate(predict_fn, answer_fn, output_fn=None, metric='f1'):

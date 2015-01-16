@@ -4,7 +4,8 @@ import random as rd
 import datetime
 import os
 
-from src.one_time_util import *
+from one_time_util import *
+from util import *
 
 
 def generate_graph():
@@ -15,16 +16,6 @@ def generate_graph():
         for i, u in enumerate(users['user_id']):
             if len(users['friends'][i]) > 0:
                 f.write('%s %s\n' % (u, ' '.join(users['friends'][i])))
-
-
-def generate_training():
-    r = load_json('../data/Review.txt', True, True)
-    index = sorted(range(len(r['date'])), key=lambda k: r['date'][k])
-
-    print("GO!")
-    with open('../output/training.txt', 'w') as f:
-        for i in index:
-            f.write("%s %s %s %f\n" % (r['user_id'][i], r['business_id'][i], r['date'][i].strftime("%Y/%m/%d"), r['stars'][i]))
 
 
 def generate_testing(r, c, date=None):
@@ -118,6 +109,8 @@ def generate_training4():
 
     # Random select 10 business having more than 100 reviews
     c_t = rd.sample(c, 100)
+    with open('../output/testing_business.txt', 'w') as f:
+        f.write(' '.join(c_t))
     c = set(c)-set(c_t)
 
     index = sorted(range(len(r['business_id'])), key=lambda k: (r['business_id'][k], r['date'][k]))
@@ -127,9 +120,6 @@ def generate_training4():
         for i in index:
             if r['business_id'][i] in c:
                 f.write("%s %s %s %f\n" % (r['user_id'][i], r['business_id'][i], r['date'][i].strftime("%Y/%m/%d"), r['stars'][i]))
-
-    with open('../output/testing_business.txt', 'w') as f:
-        f.write(' '.join(c))
 
     # Generate 3 testing data
     generate_testing(r, c_t)
@@ -161,11 +151,37 @@ def generate_user_location():
             f.write('%s %f %f\n' % (k, v[0], v[1]))
 
 
+def generate_user_location():
+    test_business = '../data/testing_business.txt'
+    with open(test_business, 'r') as f:
+        tb = f.read().strip().split()
+
+    r = load_json('../data/Review.txt', True, True)
+    b = load_json('../data/Business.txt')
+    b = {b['business_id'][i]: (b['latitude'][i], b['longitude'][i]) for i in range(len(b['business_id']))}
+    d = {}
+    for i in range(len(r['business_id'])):
+        if b[r['business_id'][i]] not in tb:
+            append_dict(d, r['user_id'][i], b[r['business_id'][i]])
+    for k, v in d.items():
+        # (latitude, longitude)
+        s = [0, 0]
+        for e in v:
+            s[0] += e[0]
+            s[1] += e[1]
+        s = (s[0]/len(e), s[1]/len(e))
+        d[k] = s
+    with open('../output/user_location(latitude_longitude).txt', 'w') as f:
+        for k, v in d.items():
+            f.write('%s %f %f\n' % (k, v[0], v[1]))
+
+
 def split_training_data(fn, num, threshold):
     r = load_json('../data/Review.txt', True, True)
     d = {}
-    for i in range(len(r['business_id'])):
-        increment_dict(d, r['business_id'][i])
+    with open(fn, 'r') as f:
+        for l in f:
+            increment_dict(d, l.strip().split()[1])
 
     c = []
     for k in d:
@@ -188,5 +204,22 @@ def split_training_data(fn, num, threshold):
                         f2.write(l)
     generate_testing(r, c_split)
 
+
+def generate_blablabla():
+    r = load_json('../data/Review.txt', True, True)
+    test_business = '../data/testing_business.txt'
+    with open(test_business, 'r') as f:
+        tb = f.read().strip().split()
+
+    index = sorted(range(len(r['business_id'])), key=lambda k: (r['business_id'][k], r['date'][k]))
+
+    print("GO!")
+    with open('../output/testing.txt', 'w') as f:
+        for i in index:
+            if r['business_id'][i] in tb:
+                f.write("%s %s %s %f\n" % (r['user_id'][i], r['business_id'][i], r['date'][i].strftime("%Y/%m/%d"), r['stars'][i]))
+
+
 if __name__ == '__main__':
-    split_training_data('../data/training.txt', 1000, 100)
+    # split_training_data('../data/training.txt', 1000, 100)
+    generate_blablabla()
