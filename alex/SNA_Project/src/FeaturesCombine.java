@@ -10,17 +10,15 @@ import java.util.HashSet;
 
 
 public class FeaturesCombine {
-
-	private final static int numFeatures = 2;
 	
 	static class BusinessUserPair
 	{
-		int businessOrder;
+		String businessID;
 		String userID;
 		int label;
-		public BusinessUserPair(int businessOrder, String userID, int label)
+		public BusinessUserPair(String businessID, String userID, int label)
 		{
-			this.businessOrder = businessOrder;
+			this.businessID = businessID;
 			this.userID = userID;
 			this.label = label;
 		}
@@ -28,12 +26,17 @@ public class FeaturesCombine {
 		public boolean equals(Object obj)
 		{
 			BusinessUserPair p = (BusinessUserPair)obj;
-			return businessOrder == p.businessOrder && userID == p.userID; 
+			return businessID.equals(p.businessID) && userID.equals(p.userID); 
 		}
 		@Override
 		public int hashCode()
 		{
 			return userID.hashCode();
+		}
+		@Override
+		public String toString()
+		{
+			return "\'"+businessID+"\'\t\'"+userID+"\'";
 		}
 	}
 	
@@ -42,21 +45,25 @@ public class FeaturesCombine {
 		
 		
 		HashMap<BusinessUserPair, HashMap<Integer, Double>> trainingData = new HashMap<BusinessUserPair, HashMap<Integer, Double>>();
+		HashMap<FeaturesCombine.BusinessUserPair, HashMap<Integer, Double>> testingData = new HashMap<FeaturesCombine.BusinessUserPair, HashMap<Integer, Double>>();
 		
 		int featureIndex = 0;
 		
 		try {
-			//inputFeatureFile(featureIndex++, "dataCreated\\BipartieCommonNeighbor_training1", trainingData);
-			inputFeatureFile(featureIndex++, "dataCreated\\BipartieCommonNeighbor_testing1", trainingData);
-			//inputFeatureFile(featureIndex++, "dataCreated\\ICSpreadSample_training1", trainingData);
-			inputFeatureFile(featureIndex++, "dataCreated\\ICSpreadSample_testing1", trainingData);
+			inputFeatureFile(featureIndex, "dataCreated\\BipartieCommonNeighbor_training1", trainingData);
+			inputFeatureFile(featureIndex, "dataCreated\\BipartieCommonNeighbor_testing1", testingData);
+			featureIndex++;
+			inputFeatureFile(featureIndex, "dataCreated\\ICSpreadSample_training1", trainingData);
+			inputFeatureFile(featureIndex, "dataCreated\\ICSpreadSample_testing1", testingData);
+			featureIndex++;
+			
 			
 			/*
 			//outputTrainingData("dataCreated\\trainingData_order", trainingData);
-			outputTrainingData("dataCreated\\testingData_order", trainingData);
+			outputTrainingData("dataCreated\\testingData_order", testingData);
 			*/
-			//outputArffTrainingData("dataCreated\\trainingData_nonNormalize.arff", trainingData);
-			outputArffTrainingData("dataCreated\\testingData_nonNormalize.arff", trainingData);
+			outputArffTrainingData(featureIndex, "dataCreated\\trainingData_nonNormalize.arff", trainingData);
+			outputArffTrainingData(featureIndex, "dataCreated\\testingData_nonNormalize.arff", testingData);
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -79,11 +86,11 @@ public class FeaturesCombine {
 		while(line != null && !line.equals(""))
 		{
 			token = line.split(" ");
-			instance = new BusinessUserPair(Integer.parseInt(token[0]), token[1], Integer.parseInt(token[3]));
+			instance = new BusinessUserPair(token[0], token[1], Integer.parseInt(token[3]));
 			features = trainingData.get(instance);
 			if (features == null)
 			{
-				features = new HashMap<Integer, Double>(numFeatures);
+				features = new HashMap<Integer, Double>();
 				features.put(featureIndex, Double.parseDouble(token[2]));
 				trainingData.put(instance, features);
 			}
@@ -96,7 +103,7 @@ public class FeaturesCombine {
 		System.out.println("Finish input "+featureFileName);
 	}
 
-	public static void outputTrainingData(String outputTrainingFileName, HashMap<BusinessUserPair, HashMap<Integer, Double>> trainingData) throws FileNotFoundException
+	public static void outputTrainingData(int numFeatures, String outputTrainingFileName, HashMap<BusinessUserPair, HashMap<Integer, Double>> trainingData) throws FileNotFoundException
 	{
 		PrintStream outputTraining = new PrintStream(new File(outputTrainingFileName));
 		HashMap<Integer, Double> features;
@@ -112,25 +119,38 @@ public class FeaturesCombine {
 		outputTraining.close();
 	}
 	
-	public static void outputArffTrainingData(String outputTrainingFileName, HashMap<FeaturesCombine.BusinessUserPair, HashMap<Integer, Double>> trainingData) throws FileNotFoundException
+	public static void outputArffTrainingData(int numFeatures, String outputTrainingFileName, HashMap<FeaturesCombine.BusinessUserPair, HashMap<Integer, Double>> trainingData) throws FileNotFoundException
 	{
-		String head = "@RELATION reviewOrNot\r\n\r\n@ATTRIBUTE bipartieCommonNeighbor NUMERIC\r\n@ATTRIBUTE ICSpreadSample NUMERIC\r\n@ATTRIBUTE class {1, 0}\r\n\r\n@DATA";
+		String head = "@RELATION reviewOrNot\r\n\r\n";
+		head += "@ATTRIBUTE bipartieCommonNeighbor NUMERIC\r\n";
+		head += "@ATTRIBUTE ICSpreadSample NUMERIC\r\n";
+		for (int i = 0; i < numFeatures - 2; i++)
+			head += "@ATTRIBUTE category_"+(i+1)+" NUMERIC\r\n";
+		/*head += "@ATTRIBUTE positionFeature_0 NUMERIC\r\n";
+		head += "@ATTRIBUTE positionFeature_1 NUMERIC\r\n";
+		head += "@ATTRIBUTE positionFeature_2 NUMERIC\r\n";
+		head += "@ATTRIBUTE positionFeature_3 NUMERIC\r\n";*/
+		head += "@ATTRIBUTE class {1, 0}\r\n\r\n@DATA";
+		String outputPairFileName = outputTrainingFileName+".pairName.txt";
 		PrintStream output = new PrintStream(new File(outputTrainingFileName));
+		PrintStream outputPair = new PrintStream(new File(outputPairFileName));
 		output.println(head);
 		HashMap<Integer, Double> features;
 		for (FeaturesCombine.BusinessUserPair instance:trainingData.keySet())
 		{
+			outputPair.println(instance);
 			features = trainingData.get(instance);
+			output.print("{");
 			for (int i = 0; i < numFeatures; i++)
 			{
 				if (features.containsKey(i))
-					output.print(""+features.get(i)+",");
-				else
-					output.print("0,");
+					output.print(""+i+" "+features.get(i)+", ");
 			}		
-			output.print(""+instance.label);
+			output.print(""+numFeatures+" "+instance.label+"}");
 			output.println();
 		}
+		output.close();
+		outputPair.close();
 	}
 	
 }

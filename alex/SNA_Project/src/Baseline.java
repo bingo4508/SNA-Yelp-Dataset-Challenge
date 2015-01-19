@@ -51,8 +51,8 @@ public class Baseline {
 		//visualizeGraph(g);
 		training(trainingFileName, g, vertices);
 		
-		//outputICSpreadSample("dataCreated\\ICSpreadSample_training1", SVMtrainingInputFileName1, SVMtrainingAnsFileName1, g, vertices);
-		outputICSpreadSample("dataCreated\\ICSpreadSample_testing1", testingInputFileName1, testingAnsFileName1, g, vertices);
+		//outputICSpreadSample("dataCreated\\training.txt(split_businesses_correct)", "dataCreated\\ICSpreadSample_training1", SVMtrainingInputFileName1, SVMtrainingAnsFileName1, g, vertices);
+		outputICSpreadSample("dataCreated\\testing_businesscorrect.txt", "dataCreated\\ICSpreadSample_testing1", testingInputFileName1, testingAnsFileName1, g, vertices);
 		
 		/*testing(testingInputFileName1, testingAnsFileName1, g, vertices);//0.0036006
 		testing(testingInputFileName2, testingAnsFileName2, g, vertices);//0.0022018
@@ -281,8 +281,11 @@ public class Baseline {
 		
 	}
 	
-	private static void outputICSpreadSample(String outputFileName, String testingInputFileName, String testingAnsFileName, Graph<Vertex, Edge> g, HashMap<String, Vertex> vertices)
+	private static void outputICSpreadSample(String businessIDFileName, String outputFileName, String testingInputFileName, String testingAnsFileName, Graph<Vertex, Edge> g, HashMap<String, Vertex> vertices)
 	{
+		BufferedReader inputBusinessID;
+		String businessID[];
+		
 		BufferedReader input = null;
 		BufferedReader answer = null;
 		String line = null;
@@ -290,9 +293,13 @@ public class Baseline {
 		HashMap<String, Double> rankUser = new HashMap<String, Double>();
 		HashSet<String> groundTruth = new HashSet<String>();
 		PrintStream featuresOutput = null;
-		int businessOrder = 1;
+		int businessOrder = 0;
 		try 
 		{
+			inputBusinessID = new BufferedReader(new FileReader(businessIDFileName));
+			line = inputBusinessID.readLine();
+			businessID = line.split(" ");
+			
 			input = new BufferedReader(new FileReader(testingInputFileName));
 			answer = new BufferedReader(new FileReader(testingAnsFileName));
 			featuresOutput = new PrintStream(new File(outputFileName));
@@ -367,9 +374,9 @@ public class Baseline {
 				for (String user:rankUser.keySet())
 				{
 					if (groundTruth.contains(user))
-						featuresOutput.println(""+businessOrder+" "+user+" "+(double)rankUser.get(user)+" 1");
+						featuresOutput.println(businessID[businessOrder]+" "+user+" "+(double)rankUser.get(user)+" 1");
 					else
-						featuresOutput.println(""+businessOrder+" "+user+" "+(double)rankUser.get(user)+" 0");
+						featuresOutput.println(businessID[businessOrder]+" "+user+" "+(double)rankUser.get(user)+" 0");
 				}
 				System.out.println(businessOrder++);
 				line = input.readLine();

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,6 +28,26 @@ public class BipartieStatistaic {
 	public static final String SVMtrainingInputFileName1 = "dataCreated\\SVM_training_data_q1.txt";
 	public static final String SVMtrainingAnsFileName1 = "dataCreated\\SVM_training_data_a1.txt";
 	
+	static class AdopterScore
+	{
+		String adopterID;
+		double score;
+		public AdopterScore(String aid, double s)
+		{
+			adopterID = aid;
+			score = s;
+		}
+		static class theComparator implements Comparator<AdopterScore>{
+			 
+		    @Override
+		    public int compare(AdopterScore e1, AdopterScore e2) {
+		    	if (e1.adopterID == e2.adopterID)
+		    		return 0;
+		    	else
+		    		return e1.score - e2.score <= 0 ? 1 : -1;
+		    }
+		}
+	}
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
@@ -36,8 +57,8 @@ public class BipartieStatistaic {
 		training(trainingFileName, ideaAdoptersList, adopterIdeasList);
 		inputSocialNetwork(graphFileName, friendsList);
 		
-		outputCommonNeighborFeatures("dataCreated\\BipartieCommonNeighbor_training2",SVMtrainingInputFileName1, SVMtrainingAnsFileName1, ideaAdoptersList, adopterIdeasList);
-		outputCommonNeighborFeatures("dataCreated\\BipartieCommonNeighbor_testing2", testingInputFileName1, testingAnsFileName1, ideaAdoptersList, adopterIdeasList);
+		outputCommonNeighborFeatures("dataCreated\\training.txt(split_businesses_correct)", "dataCreated\\BipartieCommonNeighbor_training2",SVMtrainingInputFileName1, SVMtrainingAnsFileName1, ideaAdoptersList, adopterIdeasList);
+		outputCommonNeighborFeatures("dataCreated\\testing_businesscorrect.txt", "dataCreated\\BipartieCommonNeighbor_testing2", testingInputFileName1, testingAnsFileName1, ideaAdoptersList, adopterIdeasList);
 		/*testingCommonNeighbor(testingInputFileName1, testingAnsFileName1, ideaAdoptersList, adopterIdeasList);//0.090940
 		testingCommonNeighbor(testingInputFileName2, testingAnsFileName2, ideaAdoptersList, adopterIdeasList);//0.077299
 		testingCommonNeighbor(testingInputFileName3, testingAnsFileName3, ideaAdoptersList, adopterIdeasList);//0.068896*/
@@ -135,9 +156,12 @@ public class BipartieStatistaic {
 		}
 	}
 	
-	private static void outputCommonNeighborFeatures(String outputFileName, String testingInputFileName, String testingAnsFileName, 
+	private static void outputCommonNeighborFeatures(String businessIDFileName, String outputFileName, String testingInputFileName, String testingAnsFileName, 
 			HashMap<String, HashSet<String>> ideaAdoptersList, HashMap<String, HashSet<String>> adopterIdeasList)
 	{
+		BufferedReader inputBusinessID;
+		String businessID[];
+		
 		BufferedReader input = null;
 		BufferedReader answer = null;
 		String line = null;
@@ -147,9 +171,13 @@ public class BipartieStatistaic {
 		HashSet<String> initialAdopters = new HashSet<String>();
 		HashSet<String> groundTruth = new HashSet<String>();
 		PrintStream featuresOutput = null;
-		int businessOrder = 1;
+		int businessOrder = 0;
 		try 
 		{
+			inputBusinessID = new BufferedReader(new FileReader(businessIDFileName));
+			line = inputBusinessID.readLine();
+			businessID = line.split(" ");
+			
 			input = new BufferedReader(new FileReader(testingInputFileName));
 			answer = new BufferedReader(new FileReader(testingAnsFileName));
 			featuresOutput = new PrintStream(new File(outputFileName));
@@ -180,11 +208,30 @@ public class BipartieStatistaic {
 						}
 					}
 				}
-				//collect top 200
+				//Sort score
+				SortedSet<AdopterScore> sortedAdopter = new TreeSet<AdopterScore>(new AdopterScore.theComparator());
+				for (String user:rankAdopters.keySet())
+				{
+					sortedAdopter.add(new AdopterScore(user, rankAdopters.get(user)));
+				}
+				//collect top N
+				int topN = 500;
+				int n = 0;
 				outAns.clear();
+				for (AdopterScore user:sortedAdopter)
+				{
+					if (n < topN && !initialAdopters.contains(user))
+					{
+						outAns.add(user.adopterID);
+						n++;
+					}
+					else
+						break;
+				}
+				/*outAns.clear();
 				int bestRank = 0;
 				String best;
-				for (int i = 0; i < 200; i++)
+				for (int i = 0; i < 500; i++)
 				{
 					best = null;
 					bestRank = 0;
@@ -202,8 +249,8 @@ public class BipartieStatistaic {
 						//rankAdopters.remove(best);
 					}
 					else
-						i = 200;
-				}
+						i = 500;
+				}*/
 				//find the best rank to normalize
 				/*bestRank = 0;
 				for (String otherAdopter : outAns)
@@ -220,9 +267,9 @@ public class BipartieStatistaic {
 				for (String user:outAns)
 				{
 					if (groundTruth.contains(user))
-						featuresOutput.println(""+businessOrder+" "+user+" "+(200-index)+" 1");
+						featuresOutput.println(businessID[businessOrder]+" "+user+" "+rankAdopters.get(user)+" 1");
 					else
-						featuresOutput.println(""+businessOrder+" "+user+" "+(200-index)+" 0");
+						featuresOutput.println(businessID[businessOrder]+" "+user+" "+rankAdopters.get(user)+" 0");
 					index++;
 				}
 				
